@@ -1,4 +1,4 @@
-const _ = require('lodash');
+
 const expect = require('expect');
 const request = require('supertest');
 
@@ -11,7 +11,9 @@ const todos = [{
     text:'First test todo'
 },{
     _id: new ObjectID(),
-    text : 'Second test todo'
+    text : 'Second test todo',
+    completed:true,
+    completedAt:333
 }];
 
 beforeEach((done)=>{
@@ -101,7 +103,6 @@ describe('GET /todos/:id',()=>{
 describe('DELETE /todos/:od',()=>{
     it('should remove a todo',(done)=>{
         var hexId = todos[1]._id.toHexString();
-
         request(app)
         .delete(`/todos/${hexId}`)
         .expect(200)
@@ -135,3 +136,44 @@ describe('DELETE /todos/:od',()=>{
     });
 
 });
+
+describe('PATCH /todos/:id',()=>{
+    it('should update the todo',(done)=>{
+        var hexId = todos[0]._id.toHexString();
+        var text = "test123";
+        request(app)
+        .patch(`/todos/${hexId}`)
+        .send({
+            text,
+            completed:true
+        })
+        .expect(200)
+        .expect((res)=>{
+            //console.log('res.body.todo:',res.body.todo);
+            expect(res.body.todo.text).toBe("test123");
+            expect(res.body.todo.completed).toBe(true);            
+            expect(res.body.todo.completedAt).toBeA('number');            
+        })
+        .end(done);
+    });
+    
+    it('should clear completedAt when todo is not completed',(done)=>{
+        var hexId = todos[1]._id.toHexString();
+        var text = "test123";
+        request(app)
+        .patch(`/todos/${hexId}`)
+        .send({
+            text,
+            completed:false
+        })
+        .expect(200)
+        .expect((res)=>{
+            //console.log('res.body.todo:',res.body.todo);
+            expect(res.body.todo.text).toBe("test123");
+            expect(res.body.todo.completed).toBe(false);            
+            expect(res.body.todo.completedAt).toNotExist();            
+        })
+        .end(done);
+    });
+    
+})
