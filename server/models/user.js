@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 var validateEmail = function(email) {
     var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
@@ -87,19 +88,24 @@ UserSchema.statics.findByToken = function (token) {
 
     });
 };
+// middleware to hash password
+UserSchema.pre('save',function(next){
+    var user = this;
+
+    if(user.isModified('password')){
+        var password = user.password;
+        bcrypt.genSalt(10,(err,salt)=>{
+            bcrypt.hash(password,salt,(err,res)=>{
+                user.password = res;
+                next();
+            })
+        })
+    }else{
+        next();
+    }
+});
 
 
 var User = mongoose.model('users',UserSchema);
 
-/*
-var newUser = new user({
-    name:'JC',
-    email:'gmail.com'
-});
-newUser.save().then((doc)=>{
-    console.log(JSON.stringify(doc,undefined,2));
-},(e)=>{
-    console.log('Unable to save',e);
-});
-*/
 module.exports={User};
